@@ -8,7 +8,7 @@ void getDebugAdress(String &serial, const char *FILE, const char *FUNCTION, cons
   serial += F("[");
   serial += FILE;
   serial += F("] [");
- // serial += FPSTR(FUNCTION);
+  serial += FUNCTION;
   serial += F("] [Line ");
   serial += LINE;
   serial += F("] ");

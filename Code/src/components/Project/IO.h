@@ -13,7 +13,6 @@ void handlePins(String &serial);
 void handleInputs(String &serial);
 void handleOutputs(String &serial);
 
-void sensorReset();
 void setVar_onIO(String variableName, int value);
 
 uint8_t commandRadio();

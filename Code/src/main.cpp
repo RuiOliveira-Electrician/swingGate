@@ -16,9 +16,8 @@ void setup()
   serial += F("\n");
   setupSerialPc(serial);
   DEBUG_LN(F("Initializing..."));
-
-  setupPort(serial);
   setupEeprom(serial);
+  setupPort(serial);
 
   getDebugAdress(serial, __FILE__, __func__, __LINE__);
   serial += F("Initializing Done...");
