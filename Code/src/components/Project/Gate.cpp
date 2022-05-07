@@ -1,14 +1,14 @@
 #include "Gate.h"
 
-NewTimer timerToOpenGate(10, "Second", 1);  // (*Um Segundo)
-NewTimer timerToCloseGate(10, "Second", 1); // (*Um Segundo) //Tento verificar se a porta foi fechada
+NewTimer timerToOpenGate(19, "Second", 1);  // (*Um Segundo)
+NewTimer timerToCloseGate(19, "Second", 1); // (*Um Segundo) //Tento verificar se a porta foi fechada
 
 NewTimer timerToEarlyGate(2, "Second", 1);                   // (*Um Segundo)
-NewTimer timerToOpenGateWithSensorInfrared(10, "Second", 1); // (*Um Segundo)
+NewTimer timerToOpenGateWithSensorInfrared(20, "Second", 1); // (*Um Segundo)
 
 boolean memorySensorInfraredActivated = false;
 
-int memoryGate = 0;
+int memoryGate = EEPROM.read(Memory_Gate);
 
 void handleGate(String &serial)
 {
@@ -140,6 +140,7 @@ void gateOpen(String &serial)
   {
     setVar_onIO("releOpen", 0);
     memoryGate = 10;
+    EEPROM.write(Memory_Gate, 10);
 
     getDebugAdress(serial, __FILE__, __func__, __LINE__);
     serial += F("Portao aberto");
@@ -216,6 +217,7 @@ void gateClose(String &serial)
     {
       setVar_onIO("releOpen", 0);
       memoryGate = 0;
+      EEPROM.write(Memory_Gate, 0);
 
       getDebugAdress(serial, __FILE__, __func__, __LINE__);
       serial += F("Portao fechado");

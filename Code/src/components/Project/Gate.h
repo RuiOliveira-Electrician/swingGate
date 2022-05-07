@@ -3,6 +3,7 @@
 #include "../../settings.h"
 #include "../other/debugger.h"
 #include "../other/Timer.h"
+#include "../Memory/Eeprom.h"
 
 #include "./IO.h"
 

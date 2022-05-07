@@ -59,7 +59,7 @@ uint8_t commandRadio()
 }
 uint8_t commandSensorInfrared()
 {
-  return digitalRead(buttonInfrared);
+  return !digitalRead(buttonInfrared);
 }
 uint8_t commandSensorInfrared_2()
 {
