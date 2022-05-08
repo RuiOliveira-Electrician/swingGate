@@ -16,8 +16,8 @@ void handleOutputs(String &serial);
 void setVar_onIO(String variableName, int value);
 
 uint8_t commandRadio();
+uint8_t commandBoard();
 uint8_t commandSensorInfrared();
-uint8_t commandSensorInfrared_2();
 
 void Blink_Led(const __FlashStringHelper *type, const uint8_t velocity);
 

@@ -19,6 +19,11 @@ bool NewTimer::checkTimer()
   return ((unsigned long)(millis() - this->Old_Millis) >= this->time * this->multiplier);
 }
 
+uint8_t NewTimer::getTimerPassed()
+{
+  return (((unsigned long)(millis() - this->Old_Millis) / this->multiplier));
+}
+
 void NewTimer::reset()
 {
   this->Old_Millis = millis();

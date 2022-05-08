@@ -5,7 +5,6 @@
 #include "components/Memory/Eeprom.h"
 #include "components/Project/IO.h"
 #include "components/Project/Gate.h"
-#include "components/Project/Monitor.h"
 #include "components/other/Serial/SerialPc.h"
 #include "components/other/Timer.h"
 #include "components/other/debugger.h"
@@ -24,13 +23,14 @@ void setup()
   serial += F("\n");
 
   DEBUGLN(serial);
+
+  //EEPROM.write(Memory_Gate, 0);
 }
 
 void loop()
 {
   String serial;
   handleSerialPc(serial);
-  monitor(serial);
   handlePins(serial);
   handleGate(serial);
 

@@ -8,6 +8,7 @@ public:
     NewTimer(uint8_t delay, String multiplier);
     NewTimer(uint8_t delay, String multiplier, uint8_t forceState);
     bool checkTimer();
+    uint8_t getTimerPassed();
     void reset();
     void force();
     void edit(uint8_t delay, String multiplier);
