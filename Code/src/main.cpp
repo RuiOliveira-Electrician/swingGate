@@ -24,7 +24,7 @@ void setup()
 
   DEBUGLN(serial);
 
-  //EEPROM.write(Memory_Gate, 0);
+ // EEPROM.write(Memory_Gate, 0);
 }
 
 void loop()

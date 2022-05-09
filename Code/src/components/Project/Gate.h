@@ -13,6 +13,7 @@ void handleGate(String &serial);
 
 void gateOpen(String &serial);
 void gateClose(String &serial);
+void gateStop(String &serial);
 
 bool isgateOpening();
 bool isgateClosing();

@@ -1,39 +1,74 @@
 #include "Gate.h"
 
-NewTimer timerToOpenGate(19, "Second", 1);  // (*Um Segundo)
-NewTimer timerToCloseGate(19, "Second", 1); // (*Um Segundo) //Tento verificar se a porta foi fechada
+NewTimer timerGate(timeToGate, "Second", 1); // (*Um Segundo)
 
-NewTimer timerToEarlyGate(1, "Second", 1);                   // (*Um Segundo)
-NewTimer timerToOpenGateWithSensorInfrared(20, "Second", 1); // (*Um Segundo)
+NewTimer timerToEarlyGate(timeToEarlyGate, "Second", 1); // (*Um Segundo)
 
 uint8_t memorySensorInfraredActivated = 0;
 
 uint8_t memoryGate = EEPROM.read(Memory_Gate);
+boolean memoryCommand = false;
+boolean memoryGateStop = false;
+uint8_t memoryGateTime = 0;
 
 void handleGate(String &serial)
 {
-  if (!isgateOpening() && !isgateClosing())
+  if ((commandBoard() || commandRadio()) && memoryCommand == false)
   {
-    if (commandBoard() || commandRadio())
+    memoryCommand = true;
+    if (isgateOpening())
     {
-      getDebugAdress(serial, __FILE__, __func__, __LINE__);
-      serial += F("Radio clicado");
-      serial += F("\n");
-      if (memoryGate == 50)
+      if (memoryGate == 20)
       {
+        memoryGateStop = true;
         memoryGate = 51;
-        timerToCloseGate.force();
-        gateClose(serial);
       }
-      if (memoryGate == 0)
+      else if (memoryGate != 20)
       {
-        memoryGate = 1;
-        timerToOpenGate.force();
-        gateOpen(serial);
+        gateStop(serial);
+
+        if (timerGate.getTimerPassed() > timeToGate)
+        {
+          timerGate.force();
+        }
+        else
+        {
+          memoryGateTime = timerGate.getTimerPassed();
+          timerGate.edit(memoryGateTime + 1, "Second");
+          timerGate.reset();
+        }
+        memoryGate = 20;
       }
     }
+
+    if (memoryGate == 0)
+    {
+      memoryGateStop = false;
+      memoryGate = 1;
+      timerGate.edit(timeToGate, "Second");
+      timerGate.force();
+      gateOpen(serial);
+    }
+    if (memoryGate == 50)
+    {
+      memoryGateStop = false;
+      memoryGate = 51;
+      timerGate.edit(timeToGate, "Second");
+
+      timerGate.force();
+      gateClose(serial);
+    }
+
+    getDebugAdress(serial, __FILE__, __func__, __LINE__);
+    serial += F("Radio clicado");
+    serial += F("\n");
   }
-  else if (isgateOpening())
+  else if ((!commandBoard() && !commandRadio()) && memoryCommand == true)
+  {
+    memoryCommand = false;
+  }
+
+  if (isgateOpening())
   {
     gateOpen(serial);
   }
@@ -47,19 +82,30 @@ bool gateOpenBySensorInfrared(String &serial, uint8_t _memoryGate)
 {
   if (commandSensorInfrared() && memorySensorInfraredActivated == 0)
   {
+    setVar_onIO("releOpenLeft", 0);
+    setVar_onIO("releOpenRight", 0);
+    delay(1000);
+
     setVar_onIO("releOpen", 1);
     setVar_onIO("releOpenLeft", 1);
     setVar_onIO("releOpenRight", 1);
-    DEBUG_LN(timerToCloseGate.getTimerPassed());
 
-    if (timerToCloseGate.getTimerPassed() > 20)
+    if (timerGate.getTimerPassed() > timeToGate)
     {
-      timerToOpenGateWithSensorInfrared.force();
+      timerGate.force();
     }
     else
     {
-      timerToOpenGateWithSensorInfrared.edit(timerToCloseGate.getTimerPassed() + 1, "Second");
-      timerToOpenGateWithSensorInfrared.reset();
+      if (memoryGateStop == true)
+      {
+        timerGate.edit(timeToGate - memoryGateTime + 2, "Second");
+      }
+      else
+      {
+        timerGate.edit(timerGate.getTimerPassed() + 1, "Second");
+      }
+
+      timerGate.reset();
     }
     memoryGate = _memoryGate + 20;
     memorySensorInfraredActivated = 1;
@@ -70,7 +116,7 @@ bool gateOpenBySensorInfrared(String &serial, uint8_t _memoryGate)
   }
   if (memorySensorInfraredActivated == 1)
   {
-    if (timerToOpenGateWithSensorInfrared.checkTimer())
+    if (timerGate.checkTimer())
     {
       setVar_onIO("releOpen", 0);
       setVar_onIO("releOpenLeft", 0);
@@ -90,8 +136,9 @@ bool gateOpenBySensorInfrared(String &serial, uint8_t _memoryGate)
 
 void gateOpen(String &serial)
 {
-  if (memoryGate == 1)
+  switch (memoryGate)
   {
+  case 1:
     setVar_onIO("releOpen", 1);
     timerToEarlyGate.reset();
     memoryGate = 2;
@@ -99,9 +146,8 @@ void gateOpen(String &serial)
     getDebugAdress(serial, __FILE__, __func__, __LINE__);
     serial += F("Portao a abrir");
     serial += F("\n");
-  }
-  else if (memoryGate == 2)
-  {
+    break;
+  case 2:
     setVar_onIO("releOpenRight", 1);
     timerToEarlyGate.reset();
     memoryGate = 3;
@@ -109,27 +155,29 @@ void gateOpen(String &serial)
     getDebugAdress(serial, __FILE__, __func__, __LINE__);
     serial += F("Portao a abrir direto");
     serial += F("\n");
-  }
-  else if (memoryGate == 3 && timerToEarlyGate.checkTimer())
-  {
-    memoryGate = 4;
-  }
-  else if (memoryGate == 4)
-  {
+    break;
+  case 3:
+    if (timerToEarlyGate.checkTimer())
+    {
+      memoryGate = 4;
+    }
+    break;
+  case 4:
     setVar_onIO("releOpenLeft", 1);
-    timerToOpenGate.reset();
+    timerGate.reset();
     memoryGate = 5;
 
     getDebugAdress(serial, __FILE__, __func__, __LINE__);
     serial += F("Portao a abrir esquerdo");
     serial += F("\n");
-  }
-  else if (memoryGate == 5 && timerToOpenGate.checkTimer())
-  {
-    memoryGate = 6;
-  }
-  else if (memoryGate == 6)
-  {
+    break;
+  case 5:
+    if (timerGate.checkTimer())
+    {
+      memoryGate = 6;
+    }
+    break;
+  case 6:
     setVar_onIO("releOpenRight", 0);
     timerToEarlyGate.reset();
     memoryGate = 7;
@@ -137,29 +185,30 @@ void gateOpen(String &serial)
     getDebugAdress(serial, __FILE__, __func__, __LINE__);
     serial += F("Portao aberto direito");
     serial += F("\n");
-  }
-  else if (memoryGate == 7 && timerToEarlyGate.checkTimer())
-  {
-    memoryGate = 8;
-  }
-  else if (memoryGate == 8)
-  {
+    break;
+  case 7:
+    if (timerToEarlyGate.checkTimer())
+    {
+      memoryGate = 8;
+    }
+    break;
+  case 8:
     setVar_onIO("releOpenLeft", 0);
     memoryGate = 9;
 
     getDebugAdress(serial, __FILE__, __func__, __LINE__);
     serial += F("Portao aberto esquerdo");
     serial += F("\n");
-  }
-  else if (memoryGate == 9)
-  {
-    setVar_onIO("releOpen", 0);
+    break;
+  case 9:
+    gateStop(serial);
     memoryGate = 50;
     EEPROM.write(Memory_Gate, 50);
 
     getDebugAdress(serial, __FILE__, __func__, __LINE__);
     serial += F("Portao aberto");
     serial += F("\n");
+    break;
   }
 }
 
@@ -167,8 +216,9 @@ void gateClose(String &serial)
 {
   if (!gateOpenBySensorInfrared(serial, 50))
   {
-    if (memoryGate == 51)
+    switch (memoryGate)
     {
+    case 51:
       setVar_onIO("releOpen", 0);
       timerToEarlyGate.reset();
       memoryGate = 52;
@@ -176,9 +226,8 @@ void gateClose(String &serial)
       getDebugAdress(serial, __FILE__, __func__, __LINE__);
       serial += F("Portao a fechar");
       serial += F("\n");
-    }
-    else if (memoryGate == 52)
-    {
+      break;
+    case 52:
       setVar_onIO("releOpenLeft", 1);
       timerToEarlyGate.reset();
       memoryGate = 53;
@@ -186,27 +235,29 @@ void gateClose(String &serial)
       getDebugAdress(serial, __FILE__, __func__, __LINE__);
       serial += F("Portao a fechar esquerdo");
       serial += F("\n");
-    }
-    else if (memoryGate == 53 && timerToEarlyGate.checkTimer())
-    {
-      memoryGate = 54;
-    }
-    else if (memoryGate == 54)
-    {
+      break;
+    case 53:
+      if (timerToEarlyGate.checkTimer())
+      {
+        memoryGate = 54;
+      }
+      break;
+    case 54:
       setVar_onIO("releOpenRight", 1);
-      timerToCloseGate.reset();
+      timerGate.reset();
       memoryGate = 55;
 
       getDebugAdress(serial, __FILE__, __func__, __LINE__);
       serial += F("Portao a fechar direto");
       serial += F("\n");
-    }
-    else if (memoryGate == 55 && timerToCloseGate.checkTimer())
-    {
-      memoryGate = 56;
-    }
-    else if (memoryGate == 56)
-    {
+      break;
+    case 55:
+      if (timerGate.checkTimer())
+      {
+        memoryGate = 56;
+      }
+      break;
+    case 56:
       setVar_onIO("releOpenLeft", 0);
       timerToEarlyGate.reset();
       memoryGate = 57;
@@ -214,31 +265,44 @@ void gateClose(String &serial)
       getDebugAdress(serial, __FILE__, __func__, __LINE__);
       serial += F("Portao fechado esquerdo");
       serial += F("\n");
-    }
-    else if (memoryGate == 57 && timerToEarlyGate.checkTimer())
-    {
-      memoryGate = 58;
-    }
-    else if (memoryGate == 58)
-    {
+      break;
+    case 57:
+      if (timerToEarlyGate.checkTimer())
+      {
+        memoryGate = 58;
+      }
+      break;
+    case 58:
       setVar_onIO("releOpenRight", 0);
       memoryGate = 59;
 
       getDebugAdress(serial, __FILE__, __func__, __LINE__);
       serial += F("Portao fechado direito");
       serial += F("\n");
-    }
-    else if (memoryGate == 59)
-    {
-      setVar_onIO("releOpen", 0);
+      break;
+    case 59:
+      gateStop(serial);
       memoryGate = 0;
       EEPROM.write(Memory_Gate, 0);
 
       getDebugAdress(serial, __FILE__, __func__, __LINE__);
       serial += F("Portao fechado");
       serial += F("\n");
+      break;
     }
   }
+}
+
+void gateStop(String &serial)
+{
+  setVar_onIO("releOpenLeft", 0);
+  setVar_onIO("releOpenRight", 0);
+  delay(1000);
+  setVar_onIO("releOpen", 0);
+
+  getDebugAdress(serial, __FILE__, __func__, __LINE__);
+  serial += F("Portao a parado");
+  serial += F("\n");
 }
 
 bool isgateOpening()

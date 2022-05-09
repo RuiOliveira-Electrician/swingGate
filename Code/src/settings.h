@@ -1,6 +1,10 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 #include <stdint.h>
+
+#define timeToGate 18
+#define timeToEarlyGate 1
+
 //------------------//Eeprom//------------------//
 #define EEPROM_SIZE 2
 #define EEPROM_RESET 0
