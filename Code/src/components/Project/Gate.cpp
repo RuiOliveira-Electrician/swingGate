@@ -4,77 +4,86 @@ NewTimer timerGate(timeToGate, "Second", 1); // (*Um Segundo)
 
 NewTimer timerToEarlyGate(timeToEarlyGate, "Second", 1); // (*Um Segundo)
 
+NewTimer timerGateBlocked(timeToGateBlocked, "Second", 1); // (*Um Segundo)
+
+NewTimer timercommandClickGateBlocked(1, "Second", 1); // (*Um Segundo)
+
 uint8_t memorySensorInfraredActivated = 0;
 
 uint8_t memoryGate = EEPROM.read(Memory_Gate);
 boolean memoryCommand = false;
 boolean memoryGateStop = false;
 uint8_t memoryGateTime = 0;
+uint8_t memoryGateBlocked = 0, contGateBlocked = 0;
 
 void handleGate(String &serial)
 {
-  if ((commandBoard() || commandRadio()) && memoryCommand == false)
+  gateBlocked(serial);
+  if (!isgateBlocked())
   {
-    memoryCommand = true;
+    if ((commandBoard() || commandRadio()) && memoryCommand == false)
+    {
+      memoryCommand = true;
+      if (isgateOpening())
+      {
+        if (memoryGate == 20)
+        {
+          memoryGateStop = true;
+          memoryGate = 51;
+        }
+        else if (memoryGate != 20)
+        {
+          gateStop(serial);
+
+          if (timerGate.getTimerPassed() > timeToGate)
+          {
+            timerGate.force();
+          }
+          else
+          {
+            memoryGateTime = timerGate.getTimerPassed();
+            timerGate.edit(memoryGateTime + 1, "Second");
+            timerGate.reset();
+          }
+          memoryGate = 20;
+        }
+      }
+
+      if (memoryGate == 0)
+      {
+        memoryGateStop = false;
+        memoryGate = 1;
+        timerGate.edit(timeToGate, "Second");
+        timerGate.force();
+        gateOpen(serial);
+      }
+      if (memoryGate == 50)
+      {
+        memoryGateStop = false;
+        memoryGate = 51;
+        timerGate.edit(timeToGate, "Second");
+
+        timerGate.force();
+        gateClose(serial);
+      }
+
+      getDebugAdress(serial, __FILE__, __func__, __LINE__);
+      serial += F("Radio clicado");
+      serial += F("\n");
+    }
+    else if ((!commandBoard() && !commandRadio()) && memoryCommand == true)
+    {
+      memoryCommand = false;
+    }
+
     if (isgateOpening())
     {
-      if (memoryGate == 20)
-      {
-        memoryGateStop = true;
-        memoryGate = 51;
-      }
-      else if (memoryGate != 20)
-      {
-        gateStop(serial);
-
-        if (timerGate.getTimerPassed() > timeToGate)
-        {
-          timerGate.force();
-        }
-        else
-        {
-          memoryGateTime = timerGate.getTimerPassed();
-          timerGate.edit(memoryGateTime + 1, "Second");
-          timerGate.reset();
-        }
-        memoryGate = 20;
-      }
-    }
-
-    if (memoryGate == 0)
-    {
-      memoryGateStop = false;
-      memoryGate = 1;
-      timerGate.edit(timeToGate, "Second");
-      timerGate.force();
       gateOpen(serial);
     }
-    if (memoryGate == 50)
+    else if (isgateClosing())
     {
-      memoryGateStop = false;
-      memoryGate = 51;
-      timerGate.edit(timeToGate, "Second");
-
-      timerGate.force();
       gateClose(serial);
     }
-
-    getDebugAdress(serial, __FILE__, __func__, __LINE__);
-    serial += F("Radio clicado");
-    serial += F("\n");
-  }
-  else if ((!commandBoard() && !commandRadio()) && memoryCommand == true)
-  {
-    memoryCommand = false;
-  }
-
-  if (isgateOpening())
-  {
-    gateOpen(serial);
-  }
-  else if (isgateClosing())
-  {
-    gateClose(serial);
   }
 }
 
@@ -305,6 +314,42 @@ void gateStop(String &serial)
   serial += F("\n");
 }
 
+void gateBlocked(String &serial)
+{
+  if ((commandBoard() || commandRadio()) && contGateBlocked == 0 && timercommandClickGateBlocked.checkTimer())
+  {
+    contGateBlocked = 1;
+    timerGateBlocked.reset();
+    timercommandClickGateBlocked.reset();
+  }
+  else if ((commandBoard() || commandRadio()) && contGateBlocked >= 1 && timercommandClickGateBlocked.checkTimer())
+  {
+    timercommandClickGateBlocked.reset();
+    contGateBlocked++;
+
+    getDebugAdress(serial, __FILE__, __func__, __LINE__);
+    serial += F("portao cont: ");
+    serial += contGateBlocked;
+    serial += F("\n");
+
+    if (contGateBlocked > 5)
+    {
+      memoryGateBlocked = 1;
+      getDebugAdress(serial, __FILE__, __func__, __LINE__);
+      serial += F("portao bolqueado");
+      serial += F("\n");
+    }
+  }
+  else if (timerGateBlocked.checkTimer() && contGateBlocked <= 5 && contGateBlocked != 0)
+  {
+    contGateBlocked = 0;
+    memoryGateBlocked = 0;
+    getDebugAdress(serial, __FILE__, __func__, __LINE__);
+    serial += F("portao resetado do bolqueio");
+    serial += F("\n");
+  }
+}
+
 bool isgateOpening()
 {
   if (memoryGate > 0 && memoryGate < 50)
@@ -326,4 +371,9 @@ bool isgateClosing()
   {
     return false;
   }
+}
+
+bool isgateBlocked()
+{
+  return memoryGateBlocked;
 }

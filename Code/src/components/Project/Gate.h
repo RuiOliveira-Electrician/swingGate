@@ -14,8 +14,10 @@ void handleGate(String &serial);
 void gateOpen(String &serial);
 void gateClose(String &serial);
 void gateStop(String &serial);
+void gateBlocked(String &serial);
 
 bool isgateOpening();
 bool isgateClosing();
+bool isgateBlocked();
 
 #endif

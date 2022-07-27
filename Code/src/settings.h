@@ -4,6 +4,7 @@
 
 #define timeToGate 18
 #define timeToEarlyGate 1
+#define timeToGateBlocked 50
 
 //------------------//Eeprom//------------------//
 #define EEPROM_SIZE 2

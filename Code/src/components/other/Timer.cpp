@@ -5,18 +5,18 @@ NewTimer::NewTimer(uint8_t time, String multiplier, uint8_t forceState)
   this->Old_Millis = 0;
   this->time = time;
   this->forceState = forceState;
-
+  
   getMultiplier(multiplier);
 
   if (this->forceState == 1)
   {
-    this->Old_Millis = this->time * this->multiplier;
+    this->Old_Millis = (unsigned long)this->time * this->multiplier;
   }
 }
 
 bool NewTimer::checkTimer()
 {
-  return ((unsigned long)(millis() - this->Old_Millis) >= this->time * this->multiplier);
+  return ((unsigned long)(millis() - this->Old_Millis) >= (unsigned long)this->time * this->multiplier);
 }
 
 uint8_t NewTimer::getTimerPassed()
@@ -31,7 +31,7 @@ void NewTimer::reset()
 
 void NewTimer::force()
 {
-  this->Old_Millis = this->time * this->multiplier;
+  this->Old_Millis = (unsigned long)this->time * this->multiplier;
 }
 
 void NewTimer::edit(uint8_t time, String multiplier)
