@@ -1,65 +1,72 @@
 #include "Timer.h"
 
-NewTimer::NewTimer(uint8_t time, String multiplier, uint8_t forceState)
+Timer::Timer(int delay = 1, unsigned long scale = Timer::Scale::second, bool initialState = false)
 {
-  this->Old_Millis = 0;
-  this->time = time;
-  this->forceState = forceState;
-  
-  getMultiplier(multiplier);
+  this->previous_millis = 0;
+  this->delay = delay;
+  this->scale = scale;
 
-  if (this->forceState == 1)
+  if (initialState)
   {
-    this->Old_Millis = (unsigned long)this->time * this->multiplier;
+    this->force();
   }
 }
 
-bool NewTimer::checkTimer()
+void Timer::edit(int delay = 1, unsigned long scale = Timer::Scale::second, bool initialState = false)
 {
-  return ((unsigned long)(millis() - this->Old_Millis) >= (unsigned long)this->time * this->multiplier);
+  this->delay = delay;
+  this->scale = scale;
+
+  if (initialState)
+  {
+    this->force();
+  }
 }
 
-uint8_t NewTimer::getTimerPassed()
+String Timer::debug()
 {
-  return (((unsigned long)(millis() - this->Old_Millis) / this->multiplier));
+  String serial;
+  serial += F("Old_Millis  ");
+  serial += this->previous_millis;
+  serial += F("  time  ");
+  serial += this->delay;
+  serial += F("  multiplier  ");
+  serial += this->scale;
+  serial += F("  time * multiplier  ");
+  serial += this->getIntervalInMillis();
+  serial += F("  time passed  ");
+  serial += this->getTimePassedInMillis();
+  serial += F("\n");
+
+  return serial;
 }
 
-void NewTimer::reset()
+unsigned long Timer::getIntervalInMillis()
 {
-  this->Old_Millis = millis();
+  return (unsigned long)this->delay * this->scale;
 }
 
-void NewTimer::force()
+unsigned long Timer::getTimePassedInMillis()
 {
-  this->Old_Millis = (unsigned long)this->time * this->multiplier;
+  return (unsigned long)(millis() - this->previous_millis);
 }
 
-void NewTimer::edit(uint8_t time, String multiplier)
+unsigned long Timer::getTimePassedByScale()
 {
-  this->time = time;
-  getMultiplier(multiplier);
+  return (unsigned long)(this->getTimePassedInMillis() / this->scale);
 }
 
-void NewTimer::getMultiplier(String multiplier)
+bool Timer::hasEndedDelay()
 {
-  if (multiplier == "Hour")
-  {
-    this->multiplier = Hour;
-  }
-  else if (multiplier == "Minute")
-  {
-    this->multiplier = Minute;
-  }
-  else if (multiplier == "Second")
-  {
-    this->multiplier = Second;
-  }
-  else if (multiplier == "TenMillisSecond")
-  {
-    this->multiplier = TenMillisSecond;
-  }
-  else
-  {
-    this->multiplier = defaultTime;
-  }
+  return this->getTimePassedInMillis() >= this->getIntervalInMillis();
+}
+
+void Timer::reset()
+{
+  this->previous_millis = millis();
+}
+
+void Timer::force()
+{
+  this->previous_millis = this->getIntervalInMillis();
 }

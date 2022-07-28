@@ -2,25 +2,30 @@
 #define TIMER_H
 #include <Arduino.h>
 
-class NewTimer
+class Timer
 {
 public:
-    NewTimer(uint8_t delay, String multiplier);
-    NewTimer(uint8_t delay, String multiplier, uint8_t forceState);
-    bool checkTimer();
-    uint8_t getTimerPassed();
+    struct Scale
+    {
+        static const unsigned long millis = 1;
+        static const unsigned long second = 1000;
+        static const unsigned long minute = 60000;
+        static const unsigned long hour = 3600000;
+    };
+    Timer(int delay = 1, unsigned long scale = Timer::Scale::second, bool initialState = false);
+    void edit(int delay = 1, unsigned long scale = Timer::Scale::second, bool initialState = false);
+    unsigned long getIntervalInMillis();
+    unsigned long getTimePassedInMillis();
+    unsigned long getTimePassedByScale();
+    bool hasEndedDelay();
     void reset();
     void force();
-    void edit(uint8_t delay, String multiplier);
+    String debug();
 
 private:
-    const int Hour = 3600000, Minute = 60000, Second = 1000, TenMillisSecond = 10, defaultTime = 1000;
-    uint8_t time;
-    int multiplier;
-    uint8_t forceState;
-    unsigned long Old_Millis;
-
-    void getMultiplier(String multiplier);
+    int delay;
+    unsigned long scale;
+    unsigned long previous_millis;
 };
 
 #endif

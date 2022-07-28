@@ -1,5 +1,5 @@
-#ifndef Gate.h
-#define Gate .h
+#ifndef GATE_H
+#define GATE_H
 #include "../../settings.h"
 #include "../other/debugger.h"
 #include "../other/Timer.h"
@@ -16,8 +16,12 @@ void gateClose(String &serial);
 void gateStop(String &serial);
 void gateBlocked(String &serial);
 
+bool isgateOpen();
+bool isgateClose();
 bool isgateOpening();
 bool isgateClosing();
+bool isgateStoped();
 bool isgateBlocked();
+bool isgateReadyToOpenAutomatic();
 
 #endif

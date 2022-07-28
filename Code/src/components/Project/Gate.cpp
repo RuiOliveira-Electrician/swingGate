@@ -1,12 +1,15 @@
 #include "Gate.h"
 
-NewTimer timerGate(timeToGate, "Second", 1); // (*Um Segundo)
+Timer timerGate(timeToGate, Timer::Scale::second, true); // (*Um Segundo)
 
-NewTimer timerToEarlyGate(timeToEarlyGate, "Second", 1); // (*Um Segundo)
+Timer timerToEarlyGate(timeToEarlyGate, Timer::Scale::second, true); // (*Um Segundo)
 
-NewTimer timerGateBlocked(timeToGateBlocked, "Second", 1); // (*Um Segundo)
+Timer timerGateCloseAutomatic(timeToGateCloseAutomatic, Timer::Scale::minute, false); // (*Um Minuto)
 
-NewTimer timercommandClickGateBlocked(1, "Second", 1); // (*Um Segundo)
+Timer timerGateBlocked(timeToGateBlocked, Timer::Scale::second, true); // (*Um Segundo)
+
+Timer timerCommandClickGateBlocked(1, Timer::Scale::second, true); // (*Um Segundo)
+
 
 uint8_t memorySensorInfraredActivated = 0;
 
@@ -21,47 +24,58 @@ void handleGate(String &serial)
   gateBlocked(serial);
   if (!isgateBlocked())
   {
-    if ((commandBoard() || commandRadio()) && memoryCommand == false)
+    if (commandSensorInfrared())
     {
+      timerGateCloseAutomatic.reset();
+    }
+    if ((commandBoard() || commandRadio() || isgateReadyToOpenAutomatic()) && memoryCommand == false)
+    {
+      if (isgateReadyToOpenAutomatic())
+      {
+        getDebugAdress(serial, __FILE__, __func__, __LINE__);
+        serial += F("Portao fechado pelo tempo maximo");
+        serial += F("\n");
+      }
+      timerGateCloseAutomatic.reset();
       memoryCommand = true;
       if (isgateOpening())
       {
-        if (memoryGate == 20)
+        if (isgateStoped())
         {
           memoryGateStop = true;
           memoryGate = 51;
         }
-        else if (memoryGate != 20)
+        else if (!isgateStoped())
         {
           gateStop(serial);
 
-          if (timerGate.getTimerPassed() > timeToGate)
+          if (timerGate.getTimePassedByScale() > timeToGate)
           {
             timerGate.force();
           }
           else
           {
-            memoryGateTime = timerGate.getTimerPassed();
-            timerGate.edit(memoryGateTime + 1, "Second");
+            memoryGateTime = timerGate.getTimePassedByScale();
+            timerGate.edit(memoryGateTime + 1, Timer::Scale::second);
             timerGate.reset();
           }
           memoryGate = 20;
         }
       }
 
-      if (memoryGate == 0)
+      if (isgateClose())
       {
         memoryGateStop = false;
         memoryGate = 1;
-        timerGate.edit(timeToGate, "Second");
+        timerGate.edit(timeToGate, Timer::Scale::second);
         timerGate.force();
         gateOpen(serial);
       }
-      if (memoryGate == 50)
+      if (isgateOpen())
       {
         memoryGateStop = false;
         memoryGate = 51;
-        timerGate.edit(timeToGate, "Second");
+        timerGate.edit(timeToGate, Timer::Scale::second);
 
         timerGate.force();
         gateClose(serial);
@@ -99,7 +113,7 @@ bool gateOpenBySensorInfrared(String &serial, uint8_t _memoryGate)
     setVar_onIO("releOpenLeft", 1);
     setVar_onIO("releOpenRight", 1);
 
-    if (timerGate.getTimerPassed() > timeToGate)
+    if (timerGate.getTimePassedByScale() > timeToGate)
     {
       timerGate.force();
     }
@@ -107,11 +121,11 @@ bool gateOpenBySensorInfrared(String &serial, uint8_t _memoryGate)
     {
       if (memoryGateStop == true)
       {
-        timerGate.edit(timeToGate - memoryGateTime + 2, "Second");
+        timerGate.edit(timeToGate - memoryGateTime + 2, Timer::Scale::second);
       }
       else
       {
-        timerGate.edit(timerGate.getTimerPassed() + 1, "Second");
+        timerGate.edit(timerGate.getTimePassedByScale() + 1, Timer::Scale::second);
       }
 
       timerGate.reset();
@@ -125,7 +139,7 @@ bool gateOpenBySensorInfrared(String &serial, uint8_t _memoryGate)
   }
   if (memorySensorInfraredActivated == 1)
   {
-    if (timerGate.checkTimer())
+    if (timerGate.hasEndedDelay())
     {
       setVar_onIO("releOpen", 0);
       setVar_onIO("releOpenLeft", 0);
@@ -166,7 +180,7 @@ void gateOpen(String &serial)
     serial += F("\n");
     break;
   case 3:
-    if (timerToEarlyGate.checkTimer())
+    if (timerToEarlyGate.hasEndedDelay())
     {
       memoryGate = 4;
     }
@@ -181,7 +195,7 @@ void gateOpen(String &serial)
     serial += F("\n");
     break;
   case 5:
-    if (timerGate.checkTimer())
+    if (timerGate.hasEndedDelay())
     {
       memoryGate = 6;
     }
@@ -196,7 +210,7 @@ void gateOpen(String &serial)
     serial += F("\n");
     break;
   case 7:
-    if (timerToEarlyGate.checkTimer())
+    if (timerToEarlyGate.hasEndedDelay())
     {
       memoryGate = 8;
     }
@@ -246,7 +260,7 @@ void gateClose(String &serial)
       serial += F("\n");
       break;
     case 53:
-      if (timerToEarlyGate.checkTimer())
+      if (timerToEarlyGate.hasEndedDelay())
       {
         memoryGate = 54;
       }
@@ -261,7 +275,7 @@ void gateClose(String &serial)
       serial += F("\n");
       break;
     case 55:
-      if (timerGate.checkTimer())
+      if (timerGate.hasEndedDelay())
       {
         memoryGate = 56;
       }
@@ -276,7 +290,7 @@ void gateClose(String &serial)
       serial += F("\n");
       break;
     case 57:
-      if (timerToEarlyGate.checkTimer())
+      if (timerToEarlyGate.hasEndedDelay())
       {
         memoryGate = 58;
       }
@@ -316,15 +330,15 @@ void gateStop(String &serial)
 
 void gateBlocked(String &serial)
 {
-  if ((commandBoard() || commandRadio()) && contGateBlocked == 0 && timercommandClickGateBlocked.checkTimer())
+  if ((commandBoard() || commandRadio()) && contGateBlocked == 0 && timerCommandClickGateBlocked.hasEndedDelay())
   {
     contGateBlocked = 1;
     timerGateBlocked.reset();
-    timercommandClickGateBlocked.reset();
+    timerCommandClickGateBlocked.reset();
   }
-  else if ((commandBoard() || commandRadio()) && contGateBlocked >= 1 && timercommandClickGateBlocked.checkTimer())
+  else if ((commandBoard() || commandRadio()) && contGateBlocked >= 1 && timerCommandClickGateBlocked.hasEndedDelay())
   {
-    timercommandClickGateBlocked.reset();
+    timerCommandClickGateBlocked.reset();
     contGateBlocked++;
 
     getDebugAdress(serial, __FILE__, __func__, __LINE__);
@@ -335,12 +349,13 @@ void gateBlocked(String &serial)
     if (contGateBlocked > 5)
     {
       memoryGateBlocked = 1;
+      gateStop(serial);
       getDebugAdress(serial, __FILE__, __func__, __LINE__);
       serial += F("portao bolqueado");
       serial += F("\n");
     }
   }
-  else if (timerGateBlocked.checkTimer() && contGateBlocked <= 5 && contGateBlocked != 0)
+  else if (timerGateBlocked.hasEndedDelay() && contGateBlocked <= 5 && contGateBlocked != 0)
   {
     contGateBlocked = 0;
     memoryGateBlocked = 0;
@@ -350,6 +365,28 @@ void gateBlocked(String &serial)
   }
 }
 
+bool isgateOpen()
+{
+  if (memoryGate == 50)
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+bool isgateClose()
+{
+  if (memoryGate == 0)
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
 bool isgateOpening()
 {
   if (memoryGate > 0 && memoryGate < 50)
@@ -372,8 +409,22 @@ bool isgateClosing()
     return false;
   }
 }
-
+bool isgateStoped()
+{
+  if (memoryGate == 20)
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
 bool isgateBlocked()
 {
   return memoryGateBlocked;
+}
+bool isgateReadyToOpenAutomatic()
+{
+  return timerGateCloseAutomatic.hasEndedDelay() && (isgateOpen() || isgateStoped());
 }

@@ -1,5 +1,5 @@
-#ifndef IO
-#define IO
+#ifndef IO_H
+#define IO_H
 #include "../../settings.h"
 #include "../other/debugger.h"
 #include "../other/Timer.h"
