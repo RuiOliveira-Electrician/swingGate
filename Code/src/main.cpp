@@ -6,7 +6,6 @@
 #include "components/Project/IO.h"
 #include "components/Project/Gate.h"
 #include "components/other/Serial/SerialPc.h"
-#include "components/other/Timer.h"
 #include "components/other/debugger.h"
 
 void setup()
@@ -25,7 +24,7 @@ void setup()
 
   DEBUGLN(serial);
 
- // EEPROM.write(Memory_Gate, 0);
+  // EEPROM.write(Memory_Gate, 0);
 }
 
 void loop()
@@ -41,3 +40,4 @@ void loop()
     DEBUG_LN(serial);
   }
 }
+

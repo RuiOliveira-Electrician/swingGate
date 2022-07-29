@@ -1,8 +1,8 @@
 #ifndef GATE_H
 #define GATE_H
+#include <Timer.h>
 #include "../../settings.h"
 #include "../other/debugger.h"
-#include "../other/Timer.h"
 #include "../Memory/Eeprom.h"
 
 #include "./IO.h"

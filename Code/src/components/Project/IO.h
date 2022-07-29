@@ -2,7 +2,6 @@
 #define IO_H
 #include "../../settings.h"
 #include "../other/debugger.h"
-#include "../other/Timer.h"
 
 #include <Arduino.h>
 
