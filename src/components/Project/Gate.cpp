@@ -10,7 +10,6 @@ Timer timerGateBlocked(timeToGateBlocked, Timer::Scale::second, true); // (*Um S
 
 Timer timerCommandClickGateBlocked(1, Timer::Scale::second, true); // (*Um Segundo)
 
-
 uint8_t memorySensorInfraredActivated = 0;
 
 uint8_t memoryGate = EEPROM.read(Memory_Gate);
@@ -56,7 +55,7 @@ void handleGate(String &serial)
           else
           {
             memoryGateTime = timerGate.getTimePassedByScale();
-            timerGate.edit(memoryGateTime + 1, Timer::Scale::second);
+            timerGate.edit(memoryGateTime + 1, Timer::Scale::second, false);
             timerGate.reset();
           }
           memoryGate = 20;
@@ -67,7 +66,7 @@ void handleGate(String &serial)
       {
         memoryGateStop = false;
         memoryGate = 1;
-        timerGate.edit(timeToGate, Timer::Scale::second);
+        timerGate.edit(timeToGate, Timer::Scale::second, false);
         timerGate.force();
         gateOpen(serial);
       }
@@ -75,7 +74,7 @@ void handleGate(String &serial)
       {
         memoryGateStop = false;
         memoryGate = 51;
-        timerGate.edit(timeToGate, Timer::Scale::second);
+        timerGate.edit(timeToGate, Timer::Scale::second, false);
 
         timerGate.force();
         gateClose(serial);
@@ -121,11 +120,11 @@ bool gateOpenBySensorInfrared(String &serial, uint8_t _memoryGate)
     {
       if (memoryGateStop == true)
       {
-        timerGate.edit(timeToGate - memoryGateTime + 2, Timer::Scale::second);
+        timerGate.edit(timeToGate - memoryGateTime + 2, Timer::Scale::second, false);
       }
       else
       {
-        timerGate.edit(timerGate.getTimePassedByScale() + 1, Timer::Scale::second);
+        timerGate.edit(timerGate.getTimePassedByScale() + 1, Timer::Scale::second, false);
       }
 
       timerGate.reset();
