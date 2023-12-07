@@ -13,14 +13,14 @@
 
 #define Memory_Gate 1
 
-//------------------//Entradas//------------------//
-#define buttonBoard 9
-#define buttonRadio 10
-#define buttonInfrared 7
+////------------------//Entradas//------------------//
+#define BUTTONBOARD 9
+#define BUTTONRADIO 10
+#define GATEINFRARED 7
 
 //------------------//Saidas//------------------//
-#define releOpen 4
-#define releOpenLeft 3
-#define releOpenRight 5
+#define RELEOPEN 4
+#define RELEOPENLEFT 3
+#define RELEOPENRIGHT 5
 
 #endif

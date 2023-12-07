@@ -3,8 +3,8 @@
 #include "settings.h"
 
 #include "components/Memory/Eeprom.h"
-#include "components/Project/IO.h"
-#include "components/Project/Gate.h"
+#include "components/Project/IO/IO.h"
+#include "components/Project/Gate/Gate.h"
 #include "components/other/Serial/SerialPc.h"
 #include "components/other/debugger.h"
 
@@ -15,7 +15,7 @@ void setup()
   setupSerialPc(serial);
   DEBUG_LN(F("Initializing..."));
   setupEeprom(serial);
-  setupPort(serial);
+  IO_setupPins(serial);
   gateStop(serial);
 
   getDebugAdress(serial, __FILE__, __func__, __LINE__);
@@ -31,7 +31,7 @@ void loop()
 {
   String serial;
   handleSerialPc(serial);
-  handlePins(serial);
+  IO_handlePins(serial);
   handleGate(serial);
 
   if (serial.length() > 33)
@@ -40,4 +40,3 @@ void loop()
     DEBUG_LN(serial);
   }
 }
-
