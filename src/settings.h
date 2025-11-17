@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 #define timeToGate 18              // sec
-#define timeToEarlyGate 1          // sec
+#define timeToEarlyGate 2          // sec
 #define timeToGateBlocked 50       // sec
 #define timeToGateCloseAutomatic 1 // min
 
